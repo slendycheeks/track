@@ -117,22 +117,15 @@ function periodStart(ts, win) {
 
 // one-time seed: 3 this week, 0 last week, 0 two weeks ago
 function seedIfEmpty() {
-  if (localStorage.getItem(SEEDKEY)) return;
   const existing = load();
-  if (existing.length <= 3) { // brand new, or only the old auto-seed — safe to (re)seed the real ones
-    const now = Date.now();
-    const mk = (daysAgo, h, m) => {
-      const d = new Date(); d.setDate(d.getDate()-daysAgo); d.setHours(h, m, 0, 0);
-      return Math.min(now-60000, d.getTime());
-    };
-    save([
-  { ts: new Date(2026, 5, 26, 9, 30).getTime() },
-  { ts: new Date(2026, 5, 27, 6, 30).getTime() },
-  { ts: new Date(2026, 6, 1, 7, 00).getTime() }
-]);
-  }
-  localStorage.setItem(SEEDKEY, '1');
-  localStorage.removeItem('track_seeded_v1');
+
+  if (existing.length > 0) return; // ONLY seed if truly empty
+
+  save([
+    { ts: new Date(2026, 5, 26, 9, 30).getTime() },
+    { ts: new Date(2026, 5, 27, 6, 30).getTime() },
+    { ts: new Date(2026, 6, 1, 7, 0).getTime() }
+  ]);
 }
 
 function log() { const e = load(); e.push({ ts: Date.now() }); save(e); showToast(); render(); }
