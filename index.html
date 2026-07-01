@@ -223,7 +223,7 @@ function render() {
   const prevStart = curStart - win*DAY;
   const cur = countIn(e, curStart, curStart + win*DAY);
   const prev = countIn(e, prevStart, curStart);
-  document.getElementById('now').textContent = cur;
+  document.getElementById('this').textContent = cur;
   const dEl = document.getElementById('delta');
   if (prev === 0 && cur === 0) { dEl.textContent='—'; dEl.className='delta flat'; }
   else { const diff = cur-prev;
