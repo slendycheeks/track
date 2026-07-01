@@ -136,9 +136,9 @@ function seedIfEmpty() {
 }
 
  save([
-   { ts: utc(2026, 5, 26, 9, 30) },
-   { ts: utc(2026, 5, 27, 6, 30) },
-   { ts: utc(2026, 6, 1, 7, 0) }
+  { ts: Date.UTC(2026, 5, 26, 9, 30) },
+  { ts: Date.UTC(2026, 5, 27, 6, 30) },
+  { ts: Date.UTC(2026, 6, 1, 7, 0) }
  ]);
 }
 
@@ -180,7 +180,7 @@ function fmt(ts) {
 
   if (yesterday) return 'Yesterday ' + t;
 
-  return `${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()} ${t}`;
+  return `${d.getMonth()+1}-${d.getDate()} ${t}`;
 }
 
 function countIn(e, s, en) { return e.filter(x => x.ts >= s && x.ts < en).length; }
