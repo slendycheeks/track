@@ -55,7 +55,6 @@
   .barwrap.current .barlabel { color: #e6e8eb; font-weight: 600; }
   .logrow { display: flex; justify-content: space-between; align-items: center; padding: 12px 2px; border-bottom: 1px solid #1c1f26; font-size: 14px; }
   .logrow .when { color: #8a909a; font-size: 12px; }
-  .undo { background: none; border: none; color: #6b7280; font-size: 12px; cursor: pointer; padding: 4px 8px; }
   .empty { color: #6b7280; font-size: 13px; padding: 16px 0; text-align: center; }
   .foot { margin-top: 30px; text-align: center; }
   .foot button { background: none; border: none; color: #3a3f47; font-size: 11px; cursor: pointer; }
@@ -98,8 +97,6 @@
   <h2>RECENT</h2>
   <div id="loglist"></div>
 
-  <div class="foot"><button onclick="wipe()">reset all data</button></div>
-
 <script>
 const KEY = 'track_events_v1';
 const WKEY = 'track_window_v1';
@@ -129,18 +126,16 @@ function seedIfEmpty() {
       return Math.min(now-60000, d.getTime());
     };
     save([
-      { ts: mk(0, 7, 0) },   // today, 7am
-      { ts: mk(3, 22, 30) }, // 3 days ago, night
-      { ts: mk(4, 8, 30) }   // 4 days ago, morning
-    ]);
+  { ts: new Date(2026, 5, 26, 9, 30).getTime() },
+  { ts: new Date(2026, 5, 27, 6, 30).getTime() },
+  { ts: new Date(2026, 6, 1, 7, 00).getTime() }
+]);
   }
   localStorage.setItem(SEEDKEY, '1');
   localStorage.removeItem('track_seeded_v1');
 }
 
 function log() { const e = load(); e.push({ ts: Date.now() }); save(e); showToast(); render(); }
-function undo(ts) { save(load().filter(x => x.ts !== ts)); render(); }
-function wipe() { if (confirm('Delete all data? Cannot be undone.')) { localStorage.removeItem(KEY); localStorage.removeItem(SEEDKEY); render(); } }
 
 const toastLines = [
   "One session. It's over now. Don't make it three days.",
@@ -260,7 +255,7 @@ function render() {
   list.innerHTML='';
   recent.forEach(x => {
     const row = document.createElement('div'); row.className='logrow';
-    row.innerHTML = `<span class="when">${fmt(x.ts)}</span><button class="undo" onclick="undo(${x.ts})">undo</button>`;
+    row.innerHTML = `<span class="when">${fmt(x.ts)}</span>`;
     list.appendChild(row);
   });
 }
