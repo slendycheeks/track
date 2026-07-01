@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Track">
+<meta name="theme-color" content="#0f1115">
+<title>Track</title>
+<style>
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; padding: 0; background: #0f1115; color: #e6e8eb;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    -webkit-user-select: none; user-select: none; transition: background .5s; }
+  body { padding: env(safe-area-inset-top) 20px calc(env(safe-area-inset-bottom) + 24px); max-width: 560px; margin: 0 auto; }
+  body.good { background: #0a130d; }
+  body.good h1 { color: #7fe39a; }
+  body.good .def { border-color: #24512f; background: #0f1c14; }
+  body.good .card { background: #0f1c14; border: 1px solid #1e3a26; }
+  body.good .win { background: #0f1c14; }
+  body.good .win.active { background: #16311f; border-color: #2c5c38; color: #cfe9d3; }
+  h1 { font-size: 20px; font-weight: 600; margin: 22px 0 10px; transition: color .5s; }
+  .def { background: #14171d; border: 1px solid #1f2530; border-radius: 12px; padding: 12px 14px; font-size: 13px; color: #aeb4bd; line-height: 1.5; margin-bottom: 18px; transition: all .5s; }
+  .def b { color: #e6e8eb; }
+  .status { border-radius: 14px; padding: 16px; margin-bottom: 18px; }
+  .status .st-title { font-size: 16px; font-weight: 700; margin-bottom: 4px; }
+  .status .st-sub { font-size: 13px; line-height: 1.45; opacity: .92; }
+  .st-good { background: #14261a; border: 1px solid #2c6138; } .st-good .st-title { color: #5fd67f; }
+  .st-steady { background: #1a1d24; border: 1px solid #2a2f3a; } .st-steady .st-title { color: #c4c8ce; }
+  .st-rough { background: #241f16; border: 1px solid #514324; } .st-rough .st-title { color: #e0a24f; }
+  .st-base { background: #1a1d24; border: 1px solid #2a2f3a; } .st-base .st-title { color: #8fb4e0; }
+  .btn { width: 100%; border: none; border-radius: 16px; padding: 24px; margin-bottom: 6px;
+    font-size: 18px; font-weight: 600; color: #fff; cursor: pointer; transition: transform .08s; background: #b4433a; }
+  .btn:active { transform: scale(0.98); }
+  .toast { text-align: center; font-size: 13px; color: #8a909a; min-height: 18px; margin-bottom: 14px; transition: opacity .3s; line-height: 1.4; }
+  .winbar { display: flex; gap: 6px; margin: 4px 0 4px; }
+  .win { flex: 1; text-align: center; padding: 8px; font-size: 12px; border-radius: 9px; background: #14171d; color: #8a909a; cursor: pointer; border: 1px solid transparent; transition: all .4s; }
+  .win.active { background: #1f2530; color: #e6e8eb; border-color: #2f3947; }
+  .cards { display: flex; gap: 12px; margin: 16px 0 8px; }
+  .card { flex: 1; background: #181b21; border-radius: 14px; padding: 16px; transition: all .5s; border: 1px solid transparent; }
+  .card .label { font-size: 12px; color: #8a909a; margin-bottom: 8px; }
+  .card .num { font-size: 32px; font-weight: 700; }
+  .card .delta { font-size: 12px; margin-top: 4px; }
+  .down { color: #4ecb71; } .up { color: #e0a24f; } .flat { color: #8a909a; }
+  h2 { font-size: 13px; color: #8a909a; font-weight: 600; margin: 28px 0 12px; letter-spacing: .3px; }
+  .chart { display: flex; align-items: flex-end; gap: 6px; height: 130px; padding-top: 4px; }
+  .barwrap { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; }
+  .bar { width: 100%; background: #b4433a; border-radius: 5px 5px 0 0; min-height: 2px; transition: background .5s; }
+  .bar.zero { background: #181b21; }
+  body.good .bar { background: #3f8f56; }
+  body.good .bar.zero { background: #12241a; }
+  .bartotal { font-size: 11px; color: #c4c8ce; margin-bottom: 4px; height: 14px; }
+  .barlabel { font-size: 10px; color: #6b7280; margin-top: 6px; }
+  .barwrap.current .barlabel { color: #e6e8eb; font-weight: 600; }
+  .logrow { display: flex; justify-content: space-between; align-items: center; padding: 12px 2px; border-bottom: 1px solid #1c1f26; font-size: 14px; }
+  .logrow .when { color: #8a909a; font-size: 12px; }
+  .undo { background: none; border: none; color: #6b7280; font-size: 12px; cursor: pointer; padding: 4px 8px; }
+  .empty { color: #6b7280; font-size: 13px; padding: 16px 0; text-align: center; }
+  .foot { margin-top: 30px; text-align: center; }
+  .foot button { background: none; border: none; color: #3a3f47; font-size: 11px; cursor: pointer; }
+</style>
+</head>
+<body>
+  <h1>Track</h1>
+
+  <div class="def">
+    <b>Relapse = prone, or searching sissy over ~20 min.</b> Sissy with your hand is fine, doesn't count. Tap once each time.
+  </div>
+
+  <div class="status" id="status"></div>
+
+  <button class="btn" onclick="log()">＋ Log relapse</button>
+  <div class="toast" id="toast"></div>
+
+  <div class="winbar" id="winbar">
+    <div class="win" data-w="7" onclick="setWin(7)">Weekly</div>
+    <div class="win" data-w="14" onclick="setWin(14)">2 weeks</div>
+    <div class="win" data-w="28" onclick="setWin(28)">4 weeks</div>
+  </div>
+
+  <div class="cards">
+    <div class="card">
+      <div class="label" id="c1label">This week</div>
+      <div class="num" id="now">0</div>
+      <div class="delta" id="delta"></div>
+    </div>
+    <div class="card">
+      <div class="label">Last 30 days</div>
+      <div class="num" id="month">0</div>
+      <div class="delta flat" id="avg"></div>
+    </div>
+  </div>
+
+  <h2 id="chartTitle">LAST 8 WEEKS</h2>
+  <div class="chart" id="chart"></div>
+
+  <h2>RECENT</h2>
+  <div id="loglist"></div>
+
+  <div class="foot"><button onclick="wipe()">reset all data</button></div>
+
+<script>
+const KEY = 'track_events_v1';
+const WKEY = 'track_window_v1';
+const SEEDKEY = 'track_seeded_v2';
+const DAY = 24*60*60*1000;
+
+function load() { try { return JSON.parse(localStorage.getItem(KEY)) || []; } catch { return []; } }
+function save(e) { localStorage.setItem(KEY, JSON.stringify(e)); }
+function getWin() { return parseInt(localStorage.getItem(WKEY)) || 7; }
+function setWin(w) { localStorage.setItem(WKEY, w); render(); }
+
+function periodStart(ts, win) {
+  const anchor = new Date(2023,11,31).getTime(); // Sunday 00:00 — weeks start Sunday
+  const d = new Date(ts); d.setHours(0,0,0,0);
+  const idx = Math.floor((d.getTime()-anchor)/(win*DAY));
+  return anchor + idx*win*DAY;
+}
+
+// one-time seed: 3 this week, 0 last week, 0 two weeks ago
+function seedIfEmpty() {
+  if (localStorage.getItem(SEEDKEY)) return;
+  const existing = load();
+  if (existing.length <= 3) { // brand new, or only the old auto-seed — safe to (re)seed the real ones
+    const now = Date.now();
+    const mk = (daysAgo, h, m) => {
+      const d = new Date(); d.setDate(d.getDate()-daysAgo); d.setHours(h, m, 0, 0);
+      return Math.min(now-60000, d.getTime());
+    };
+    save([
+      { ts: mk(0, 7, 0) },   // today, 7am
+      { ts: mk(3, 22, 30) }, // 3 days ago, night
+      { ts: mk(4, 8, 30) }   // 4 days ago, morning
+    ]);
+  }
+  localStorage.setItem(SEEDKEY, '1');
+  localStorage.removeItem('track_seeded_v1');
+}
+
+function log() { const e = load(); e.push({ ts: Date.now() }); save(e); showToast(); render(); }
+function undo(ts) { save(load().filter(x => x.ts !== ts)); render(); }
+function wipe() { if (confirm('Delete all data? Cannot be undone.')) { localStorage.removeItem(KEY); localStorage.removeItem(SEEDKEY); render(); } }
+
+const toastLines = [
+  "One session. It's over now. Don't make it three days.",
+  "One slip isn't a collapse. Back to normal from here.",
+  "Logged. Move on, no spiral.",
+  "It's data, not a verdict. Keep going."
+];
+function showToast() {
+  const t = document.getElementById('toast');
+  t.textContent = toastLines[Math.floor(Math.random()*toastLines.length)];
+  t.style.opacity = '1'; clearTimeout(t._h);
+  t._h = setTimeout(()=>{ t.style.opacity='0'; }, 6000);
+}
+
+function fmt(ts) {
+  const d = new Date(ts), now = new Date();
+  const t = d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+  if (d.toDateString() === now.toDateString()) return 'Today ' + t;
+  const y = new Date(now); y.setDate(now.getDate()-1);
+  if (d.toDateString() === y.toDateString()) return 'Yesterday ' + t;
+  return d.toLocaleDateString([], {month:'short', day:'numeric'}) + ' ' + t;
+}
+
+function countIn(e, s, en) { return e.filter(x => x.ts >= s && x.ts < en).length; }
+
+function renderStatus(e, win) {
+  const el = document.getElementById('status');
+  const now = Date.now();
+  if (e.length === 0) {
+    el.className='status st-base';
+    el.innerHTML = `<div class="st-title">Start logging</div><div class="st-sub">Tap every prone or long search. A few weeks and the trend shows up.</div>`;
+    return 'base';
+  }
+  const span = now - Math.min(...e.map(x=>x.ts));
+  const block = 4*win*DAY;
+  const recent = countIn(e, now-block, now+1);
+  const prior  = countIn(e, now-2*block, now-block);
+
+  if (span < 2*win*DAY) {
+    el.className='status st-base';
+    el.innerHTML = `<div class="st-title">Building baseline</div><div class="st-sub">Not enough history yet. Keep logging.</div>`;
+    return 'base';
+  }
+  if (recent === 0 && prior === 0) {
+    el.className='status st-good';
+    const wider = win < 28 ? ` Try a wider window above.` : '';
+    el.innerHTML = `<div class="st-title">In the clear ✓</div><div class="st-sub">Two clean stretches. Hold it.${wider}</div>`;
+    return 'good';
+  }
+  const thr = Math.max(1, Math.round(3*(block/(28*DAY)))); // "low" ≈ 3 per 4 weeks, scaled to window
+  if (recent <= thr) {
+    el.className='status st-good';
+    el.innerHTML = `<div class="st-title">Staying low ✓</div><div class="st-sub">Only ${recent} in the last stretch. That's low, that's winning. Hold it.</div>`;
+    return 'good';
+  }
+  if (recent < prior) {
+    el.className='status st-good';
+    el.innerHTML = `<div class="st-title">Making progress ↓</div><div class="st-sub">Down from ${prior} to ${recent}. Even with slips, the shape is down. Keep going.</div>`;
+    return 'good';
+  }
+  if (recent === prior) {
+    el.className='status st-steady';
+    el.innerHTML = `<div class="st-title">Holding steady</div><div class="st-sub">Same as last stretch (${recent}). Aim for one fewer.</div>`;
+    return 'steady';
+  }
+  el.className='status st-rough';
+  el.innerHTML = `<div class="st-title">Rough stretch</div><div class="st-sub">Up from ${prior} to ${recent}. One bad patch isn't a reset. Don't spiral, keep logging.</div>`;
+  return 'rough';
+}
+
+function render() {
+  const e = load();
+  const win = getWin();
+  const now = Date.now();
+  const wname = win===7?'week':(win===14?'2 weeks':'4 weeks');
+
+  document.querySelectorAll('.win').forEach(b => b.classList.toggle('active', parseInt(b.dataset.w)===win));
+  document.getElementById('c1label').textContent = 'This ' + wname;
+  document.getElementById('chartTitle').textContent = 'LAST 8 ' + (win===7?'WEEKS':(win===14?'FORTNIGHTS':'MONTHS'));
+
+  const state = renderStatus(e, win);
+  document.body.classList.toggle('good', state === 'good');
+
+  const curStart = periodStart(now, win);
+  const prevStart = curStart - win*DAY;
+  const cur = countIn(e, curStart, curStart + win*DAY);
+  const prev = countIn(e, prevStart, curStart);
+  document.getElementById('now').textContent = cur;
+  const dEl = document.getElementById('delta');
+  if (prev === 0 && cur === 0) { dEl.textContent='—'; dEl.className='delta flat'; }
+  else { const diff = cur-prev;
+    if (diff<0){ dEl.textContent='↓ '+Math.abs(diff)+' vs last'; dEl.className='delta down'; }
+    else if (diff>0){ dEl.textContent='↑ '+diff+' vs last'; dEl.className='delta up'; }
+    else { dEl.textContent='= last'; dEl.className='delta flat'; }
+  }
+
+  const month = countIn(e, now-30*DAY, now+1);
+  document.getElementById('month').textContent = month;
+  document.getElementById('avg').textContent = month ? (month/30*7).toFixed(1)+' / wk avg' : '—';
+
+  const chart = document.getElementById('chart'); chart.innerHTML='';
+  const periods = [];
+  for (let i=7;i>=0;i--){ const s = curStart - i*win*DAY; periods.push({s, c: countIn(e, s, s+win*DAY)}); }
+  const max = Math.max(1, ...periods.map(p=>p.c));
+  periods.forEach((p, idx) => {
+    const wrap = document.createElement('div');
+    wrap.className='barwrap'+(idx===7?' current':'');
+    const label = idx===7?'now':(idx===6?'last':'-'+(7-idx));
+    const h = p.c ? Math.max(8,(p.c/max)*100) : 2;
+    wrap.innerHTML = `<div class="bartotal">${p.c}</div><div class="bar ${p.c?'':'zero'}" style="height:${h}%"></div><div class="barlabel">${label}</div>`;
+    chart.appendChild(wrap);
+  });
+
+  const list = document.getElementById('loglist');
+  const recent = [...e].sort((a,b)=>b.ts-a.ts).slice(0,15);
+  if (recent.length===0){ list.innerHTML='<div class="empty">Nothing logged yet.</div>'; return; }
+  list.innerHTML='';
+  recent.forEach(x => {
+    const row = document.createElement('div'); row.className='logrow';
+    row.innerHTML = `<span class="when">${fmt(x.ts)}</span><button class="undo" onclick="undo(${x.ts})">undo</button>`;
+    list.appendChild(row);
+  });
+}
+
+seedIfEmpty();
+render();
+</script>
+</body>
+</html>
