@@ -131,11 +131,15 @@ function seedIfEmpty() {
 
   if (existing.length > 0) return; // ONLY seed if truly empty
 
-  save([
-    { ts: new Date(2026, 5, 26, 9, 30).getTime() },
-    { ts: new Date(2026, 5, 27, 6, 30).getTime() },
-    { ts: new Date(2026, 6, 1, 7, 0).getTime() }
-  ]);
+  function utc(y, m, d, h, min) {
+  return Date.UTC(y, m, d, h, min);
+}
+
+ save([
+   { ts: utc(2026, 5, 26, 9, 30) },
+   { ts: utc(2026, 5, 27, 6, 30) },
+   { ts: utc(2026, 6, 1, 7, 0) }
+ ]);
 }
 
 function log() { const e = load(); e.push({ ts: Date.now() }); save(e); showToast(); render(); }
@@ -176,7 +180,7 @@ function fmt(ts) {
 
   if (yesterday) return 'Yesterday ' + t;
 
-  return d.toLocaleDateString([], { month: 'short', day: 'numeric' }) + ' ' + t;
+  return `${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()} ${t}`;
 }
 
 function countIn(e, s, en) { return e.filter(x => x.ts >= s && x.ts < en).length; }
