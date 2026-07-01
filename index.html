@@ -109,10 +109,20 @@ function getWin() { return parseInt(localStorage.getItem(WKEY)) || 7; }
 function setWin(w) { localStorage.setItem(WKEY, w); render(); }
 
 function periodStart(ts, win) {
-  const anchor = new Date(2023,11,31).getTime(); // Sunday 00:00 — weeks start Sunday
-  const d = new Date(ts); d.setHours(0,0,0,0);
-  const idx = Math.floor((d.getTime()-anchor)/(win*DAY));
-  return anchor + idx*win*DAY;
+  const d = new Date(ts);
+
+  // go to local midnight
+  d.setHours(0,0,0,0);
+
+  // get Sunday of current week
+  const day = d.getDay(); // 0 = Sunday
+  d.setDate(d.getDate() - day);
+
+  const sundayStart = d.getTime();
+
+  const idx = Math.floor((Date.now() - sundayStart) / (win * DAY));
+
+  return sundayStart + idx * win * DAY;
 }
 
 // one-time seed: 3 this week, 0 last week, 0 two weeks ago
@@ -144,12 +154,29 @@ function showToast() {
 }
 
 function fmt(ts) {
-  const d = new Date(ts), now = new Date();
-  const t = d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
-  if (d.toDateString() === now.toDateString()) return 'Today ' + t;
-  const y = new Date(now); y.setDate(now.getDate()-1);
-  if (d.toDateString() === y.toDateString()) return 'Yesterday ' + t;
-  return d.toLocaleDateString([], {month:'short', day:'numeric'}) + ' ' + t;
+  const d = new Date(ts);
+  const now = new Date();
+
+  const sameDay =
+    d.getFullYear() === now.getFullYear() &&
+    d.getMonth() === now.getMonth() &&
+    d.getDate() === now.getDate();
+
+  const t = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+  if (sameDay) return 'Today ' + t;
+
+  const y = new Date(now);
+  y.setDate(now.getDate() - 1);
+
+  const yesterday =
+    d.getFullYear() === y.getFullYear() &&
+    d.getMonth() === y.getMonth() &&
+    d.getDate() === y.getDate();
+
+  if (yesterday) return 'Yesterday ' + t;
+
+  return d.toLocaleDateString([], { month: 'short', day: 'numeric' }) + ' ' + t;
 }
 
 function countIn(e, s, en) { return e.filter(x => x.ts >= s && x.ts < en).length; }
